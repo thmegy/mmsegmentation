@@ -6,8 +6,10 @@ from mmcv.parallel import collate, scatter
 from mmcv.runner import load_checkpoint
 
 from mmseg.datasets.pipelines import Compose
+from mmdet.datasets import replace_ImageToTensor
 from mmseg.models import build_segmentor
 
+import numpy as np
 
 def init_segmentor(config, checkpoint=None, device='cuda:0'):
     """Initialize a segmentor from config file.
@@ -67,7 +69,7 @@ class LoadImage:
         return results
 
 
-def inference_segmentor(model, img):
+def inference_segmentor(model, imgs):
     """Inference image(s) with the segmentor.
 
     Args:
@@ -81,12 +83,33 @@ def inference_segmentor(model, img):
     cfg = model.cfg
     device = next(model.parameters()).device  # model device
     # build the data pipeline
-    test_pipeline = [LoadImage()] + cfg.data.test.pipeline[1:]
-    test_pipeline = Compose(test_pipeline)
+    cfg.data.test.pipeline = replace_ImageToTensor(cfg.data.test.pipeline)
+    test_pipeline = Compose(cfg.data.test.pipeline)
+    
+    datas = []
+    for img in imgs:
+        # prepare data
+        if isinstance(img, np.ndarray):
+            # directly add img
+            data = dict(img=img)
+        else:
+            # add information into dict
+            data = dict(img_info=dict(filename=img), img_prefix=None)
+        # build the data pipeline
+        data = test_pipeline(data)
+        datas.append(data)
+
+    data = collate(datas, samples_per_gpu=len(imgs))
+    # just get the actual data from DataContainer
+    data['img_metas'] = [img_metas.data[0] for img_metas in data['img_metas']]
+    data['img'] = [img.data[0] for img in data['img']]
+
+#    test_pipeline = [LoadImage()] + cfg.data.test.pipeline[1:]
+#    test_pipeline = Compose(test_pipeline)
     # prepare data
-    data = dict(img=img)
-    data = test_pipeline(data)
-    data = collate([data], samples_per_gpu=1)
+#    data = dict(img=img)
+#    data = test_pipeline(data)
+#    data = collate([data], samples_per_gpu=1)
     if next(model.parameters()).is_cuda:
         # scatter to specified GPU
         data = scatter(data, [device])[0]
