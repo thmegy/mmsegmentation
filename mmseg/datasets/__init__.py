@@ -18,6 +18,7 @@ from .pascal_context import PascalContextDataset, PascalContextDataset59
 from .potsdam import PotsdamDataset
 from .stare import STAREDataset
 from .voc import PascalVOCDataset
+from .cracks import CracksDataset
 
 from .utils import replace_ImageToTensor
 
@@ -28,5 +29,5 @@ __all__ = [
     'PascalContextDataset59', 'ChaseDB1Dataset', 'DRIVEDataset', 'HRFDataset',
     'STAREDataset', 'DarkZurichDataset', 'NightDrivingDataset',
     'COCOStuffDataset', 'LoveDADataset', 'MultiImageMixDataset',
-    'iSAIDDataset', 'ISPRSDataset', 'PotsdamDataset'
+    'iSAIDDataset', 'ISPRSDataset', 'PotsdamDataset', 'CracksDataset'
 ]
