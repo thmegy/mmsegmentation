@@ -69,7 +69,7 @@ class LoadImage:
         return results
 
 
-def inference_segmentor(model, imgs):
+def inference_segmentor(model, imgs, return_score=False):
     """Inference image(s) with the segmentor.
 
     Args:
@@ -80,36 +80,57 @@ def inference_segmentor(model, imgs):
     Returns:
         (list[Tensor]): The segmentation result.
     """
+#    cfg = model.cfg
+#    device = next(model.parameters()).device  # model device
+#    
+#    datas = []
+#    for img in imgs:
+#        # prepare data
+#        if isinstance(img, np.ndarray):
+#            # directly add img
+#            if cfg.data.test.pipeline[0]['type'] == 'LoadImageFromFile':
+#                cfg.data.test.pipeline.pop(0)
+#            data = dict(img=img)
+#        else:
+#            # add information into dict
+#            data = dict(img_info=dict(filename=img), img_prefix=None)
+#
+#        # build the data pipeline
+#        cfg.data.test.pipeline = replace_ImageToTensor(cfg.data.test.pipeline)
+#        test_pipeline = Compose(cfg.data.test.pipeline)
+#        data = test_pipeline(data)
+#        datas.append(data)
+#
+#    data = collate(datas, samples_per_gpu=len(imgs))
+#    # just get the actual data from DataContainer
+#    data['img_metas'] = [img_metas.data[0] for img_metas in data['img_metas']]
+#    data['img'] = [img.data[0] for img in data['img']]
+
+#    if next(model.parameters()).is_cuda:
+#        # scatter to specified GPU
+#        data = scatter(data, [device])[0]
+#    else:
+#        data['img_metas'] = [i.data[0] for i in data['img_metas']]
+#
+#    # forward the model
+#    with torch.no_grad():
+#        result = model(return_loss=False, rescale=True, **data)
+#    return result
+
+
     cfg = model.cfg
     device = next(model.parameters()).device  # model device
     # build the data pipeline
-    cfg.data.test.pipeline = replace_ImageToTensor(cfg.data.test.pipeline)
-    test_pipeline = Compose(cfg.data.test.pipeline)
-    
-    datas = []
-    for img in imgs:
-        # prepare data
-        if isinstance(img, np.ndarray):
-            # directly add img
-            data = dict(img=img)
-        else:
-            # add information into dict
-            data = dict(img_info=dict(filename=img), img_prefix=None)
-        # build the data pipeline
-        data = test_pipeline(data)
-        datas.append(data)
-
-    data = collate(datas, samples_per_gpu=len(imgs))
-    # just get the actual data from DataContainer
-    data['img_metas'] = [img_metas.data[0] for img_metas in data['img_metas']]
-    data['img'] = [img.data[0] for img in data['img']]
-
-#    test_pipeline = [LoadImage()] + cfg.data.test.pipeline[1:]
-#    test_pipeline = Compose(test_pipeline)
+    test_pipeline = [LoadImage()] + cfg.data.test.pipeline[1:]
+    test_pipeline = Compose(test_pipeline)
     # prepare data
-#    data = dict(img=img)
-#    data = test_pipeline(data)
-#    data = collate([data], samples_per_gpu=1)
+    data = []
+    imgs = imgs if isinstance(imgs, list) else [imgs]
+    for img in imgs:
+        img_data = dict(img=img)
+        img_data = test_pipeline(img_data)
+        data.append(img_data)
+    data = collate(data, samples_per_gpu=len(imgs))
     if next(model.parameters()).is_cuda:
         # scatter to specified GPU
         data = scatter(data, [device])[0]
@@ -118,7 +139,7 @@ def inference_segmentor(model, imgs):
 
     # forward the model
     with torch.no_grad():
-        result = model(return_loss=False, rescale=True, **data)
+        result = model(return_loss=False, rescale=True, return_score=return_score, **data)
     return result
 
 

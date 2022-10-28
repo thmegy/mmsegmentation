@@ -15,11 +15,13 @@ class CracksDataset(CustomDataset):
 
     """
 
-    CLASSES = ('Background', 'Arrachement_pelade', 'Faiencage', 'Nid_de_poule',
-                 'Transversale', 'Longitudinale', 'Reparation')
+    CLASSES = ('Background', 'Arrachement_pelade', 'Faiencage', 'Nid_de_poule', 'Transversale', 'Longitudinale',
+               'Pontage_de_fissures', 'Remblaiement_de_tranchees', 'Raccord_de_chaussee',
+               'Comblage_de_trou_ou_Projection_d_enrobe', 'Bouche_a_clef', 'Grille_avaloir', 'Regard_tampon')
 
-    PALETTE = [[120, 120, 120], [220, 10, 50], [6, 230, 230], [20, 10, 10],
-               [220, 130, 30], [240, 240, 70], [60, 220, 30]]
+    PALETTE = [[0, 0, 0], [220, 10, 50], [6, 230, 230], [20, 10, 10],
+               [220, 130, 30], [240, 240, 70], [60, 220, 30], [192, 128, 128], [0, 64, 0],
+               [128, 64, 0], [0, 192, 0], [128, 192, 0], [0, 64, 128]]
 
     def __init__(self, **kwargs):
         super(CracksDataset, self).__init__(
